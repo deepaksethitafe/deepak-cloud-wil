@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "parameters": {
+    "aksClusterName": { "value": "lab2e-aks-arm" },
+    "location": { "value": "australiaeast" },
+    "acrId": {
+      "value": "/subscriptions/67834d8f-ab51-47ac-b095-19924f5a8b35/resourceGroups/lab2e-rg/providers/Microsoft.ContainerRegistry/registries/lab2eacr12345"
+    }
+  }
+}

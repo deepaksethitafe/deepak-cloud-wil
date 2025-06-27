@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "aksClusterName": { "type": "string" },
+    "location": { "type": "string" },
+    "acrId": { "type": "string" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('aksClusterName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "dnsPrefix": "[parameters('aksClusterName')]",
+        "agentPoolProfiles": [
+          {
+            "name": "nodepool1",
+            "count": 1,
+            "vmSize": "Standard_DS2_v2",
+            "osType": "Linux",
+            "mode": "System",
+            "type": "VirtualMachineScaleSets"
+          }
+        ],
+        "enableRBAC": true,
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "loadBalancerSku": "standard"
+        },
+        "addonProfiles": {
+          "omsagent": {
+            "enabled": true
+          }
+        },
+        "aadProfile": {
+          "managed": true
+        },
+        "servicePrincipalProfile": {
+          "clientId": "msi"
+        },
+        "apiServerAccessProfile": {
+          "enablePrivateCluster": false
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+      "apiVersion": "2022-04-01-preview",
+      // "name": "[format('{0}/Microsoft.Authorization/{1}', parameters('acrId'), guid(parameters('aksClusterName')))]",
+    //  "name": "[format('{0}/Microsoft.Authorization/{1}', split(parameters('acrId'), '/')[8], guid(parameters('aksClusterName')))]",
+    "name": "[format('{0}/Microsoft.Authorization/{1}', last(split(parameters('acrId'), '/')), guid(parameters('aksClusterName')))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+        "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName')), '2023-01-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', parameters('aksClusterName'))]"
+      ]
+    }
+  ]
+}
